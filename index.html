@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>近代日本人长江游记资料库</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea { height: 100px; }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #3498db; color: white; }
+        .chart-container { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; }
+        .chart-box { flex: 1; min-width: 300px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .filter-bar { background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .filter-bar input { width: 30%; margin-right: 10px; }
+        .small-hint { font-size: 0.85em; color: #666; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📜 近代日本人长江游记资料库</h1>
+        <p>开放协作，共同挖掘长江的历史记忆</p>
+
+        <!-- 添加/编辑条目表单 -->
+        <div id="editPanel" style="background: #fafafa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 id="formTitle">✍️ 添加新条目</h3>
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label>作者</label>
+                <input type="text" id="authorInput" list="authorList" placeholder="例如：竹添进一郎">
+                <datalist id="authorList">
+                    <option value="竹添进一郎">
+                    <option value="冈千仞">
+                    <option value="内藤湖南">
+                    <option value="芥川龙之介">
+                    <option value="安藤更生">
+                    <option value="曾根俊虎">
+                    <option value="德富苏峰">
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>著作</label>
+                <input type="text" id="bookInput" list="bookList" placeholder="例如：栈云峡雨日记">
+                <datalist id="bookList">
+                    <option value="栈云峡雨日记">
+                    <option value="观光纪游">
+                    <option value="燕山楚水">
+                    <option value="中国游记">
+                    <option value="长江漫游日记">
+                    <option value="北中国纪游">
+                    <option value="中国漫游记">
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>游记文本内容</label>
+                <textarea id="textInput" placeholder="请粘贴原文段落..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>江段 <span class="small-hint">（多个用逗号分隔，如：宜昌三峡,重庆）</span></label>
+                <input type="text" id="riverSectionInput" list="riverList" placeholder="选择或输入江段，多个用逗号隔开">
+                <datalist id="riverList">
+                    <option value="上海">
+                    <option value="南京">
+                    <option value="武汉">
+                    <option value="宜昌三峡">
+                    <option value="重庆">
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>主题 <span class="small-hint">（多个用逗号分隔，如：风景,航运）</span></label>
+                <input type="text" id="themeInput" list="themeList" placeholder="选择或输入主题，多个用逗号隔开">
+                <datalist id="themeList">
+                    <option value="风景">
+                    <option value="社会">
+                    <option value="航运">
+                    <option value="生态">
+                    <option value="历史">
+                    <option value="文化记忆">
+                    <option value="殖民视角">
+                    <option value="情感抒怀">
+                    <option value="军事观察">
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>年份</label>
+                <input type="number" id="yearInput" placeholder="例如：1876" min="1800" max="1950">
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <input type="text" id="noteInput" placeholder="其他补充信息...">
+            </div>
+            <div>
+                <button onclick="saveEntry()">💾 保存</button>
+                <button type="button" onclick="cancelEdit()" class="btn-secondary">取消编辑</button>
+            </div>
+        </div>
+
+        <!-- 检索过滤栏 -->
+        <div class="filter-bar">
+            <h4>🔍 检索条目</h4>
+            <input type="text" id="filterBook" list="bookList" placeholder="著作（可选）">
+            <input type="text" id="filterRiver" list="riverList" placeholder="江段（可选）">
+            <input type="text" id="filterTheme" list="themeList" placeholder="主题（可选）">
+            <button onclick="applyFilter()">筛选</button>
+            <button onclick="resetFilter()" class="btn-secondary">显示全部</button>
+        </div>
+
+        <h3>📋 条目列表</h3>
+        <div style="overflow-x: auto;">
+            <table id="entryTable">
+                <thead>
+                    <tr>
+                        <th>作者</th><th>著作</th><th>文本预览</th><th>江段</th><th>主题</th><th>年份</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <h3 style="margin-top: 30px;">📊 数据分析（全部数据）</h3>
+        <div class="chart-container">
+            <div class="chart-box">
+                <h4>江段分布</h4>
+                <canvas id="riverChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>主题分布</h4>
+                <canvas id="themeChart" width="300" height="200"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>各阶段条目数量</h4>
+                <canvas id="stageChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var entries = [];           // 全部条目
+        var filteredEntries = [];  // 当前显示的条目（过滤后）
+        var editMode = false;
+        var currentEditId = null;
+
+        // 加载全部数据
+        function loadEntries() {
+            fetch('/api/entries')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    entries = data;
+                    filteredEntries = entries.slice(); // 默认显示全部
+                    renderTable();
+                    renderCharts();
+                })
+                .catch(function(err) {
+                    console.error('加载失败:', err);
+                });
+        }
+
+        // 渲染表格（使用filteredEntries）
+        function renderTable() {
+            var tbody = document.querySelector('#entryTable tbody');
+            tbody.innerHTML = '';
+            filteredEntries.forEach(function(entry) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + escapeHtml(entry.author) + '</td>' +
+                    '<td>' + escapeHtml(entry.book) + '</td>' +
+                    '<td>' + escapeHtml(entry.text).substring(0, 30) + '…</td>' +
+                    '<td>' + escapeHtml(entry.riverSection) + '</td>' +
+                    '<td>' + escapeHtml(entry.theme) + '</td>' +
+                    '<td>' + (entry.year || '') + '</td>' +
+                    '<td><button onclick="editEntry(\'' + entry.id + '\')">✏️</button> ' +
+                    '<button class="btn-danger" onclick="deleteEntry(\'' + entry.id + '\')">🗑️</button></td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 图表始终基于全部数据
+        function renderCharts() {
+            var riverCounts = {};
+            entries.forEach(function(e) {
+                // 江段可能包含多个，拆分统计
+                var sections = (e.riverSection || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+                if (sections.length === 0) {
+                    riverCounts['未分类'] = (riverCounts['未分类'] || 0) + 1;
+                } else {
+                    sections.forEach(function(sec) {
+                        riverCounts[sec] = (riverCounts[sec] || 0) + 1;
+                    });
+                }
+            });
+            createOrUpdateChart('riverChart', 'bar', Object.keys(riverCounts), Object.values(riverCounts), '提及次数');
+
+            var themeCounts = {};
+            entries.forEach(function(e) {
+                var themes = (e.theme || '').split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+                if (themes.length === 0) {
+                    themeCounts['未分类'] = (themeCounts['未分类'] || 0) + 1;
+                } else {
+                    themes.forEach(function(t) {
+                        themeCounts[t] = (themeCounts[t] || 0) + 1;
+                    });
+                }
+            });
+            createOrUpdateChart('themeChart', 'pie', Object.keys(themeCounts), Object.values(themeCounts), '提及次数');
+
+            var stages = { '1870年代': 0, '1880年代': 0, '1890年代': 0, '1900年代': 0, '1910年代': 0, '1920年代': 0, '未标注': 0 };
+            entries.forEach(function(e) {
+                var year = parseInt(e.year);
+                if (!year || isNaN(year)) stages['未标注']++;
+                else if (year < 1880) stages['1870年代']++;
+                else if (year < 1890) stages['1880年代']++;
+                else if (year < 1900) stages['1890年代']++;
+                else if (year < 1910) stages['1900年代']++;
+                else if (year < 1920) stages['1910年代']++;
+                else stages['1920年代']++;
+            });
+            var stageLabels = Object.keys(stages).filter(function(k) { return stages[k] > 0; });
+            var stageValues = stageLabels.map(function(k) { return stages[k]; });
+            createOrUpdateChart('stageChart', 'bar', stageLabels, stageValues, '条目数');
+        }
+
+        function createOrUpdateChart(canvasId, type, labels, data, label) {
+            var ctx = document.getElementById(canvasId).getContext('2d');
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: ['#3498db','#e74c3c','#2ecc71','#f1c40f','#9b59b6','#1abc9c','#e67e22','#95a5a6','#34495e','#7f8c8d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true, position: 'bottom' } }
+                }
+            });
+        }
+
+        // 保存条目（新增或更新）
+        function saveEntry() {
+            var entryData = {
+                author: document.getElementById('authorInput').value.trim(),
+                book: document.getElementById('bookInput').value.trim(),
+                text: document.getElementById('textInput').value.trim(),
+                riverSection: document.getElementById('riverSectionInput').value.trim(),
+                theme: document.getElementById('themeInput').value.trim(),
+                year: document.getElementById('yearInput').value,
+                note: document.getElementById('noteInput').value.trim()
+            };
+            if (!entryData.author || !entryData.text) {
+                alert('作者和文本内容不能为空');
+                return;
+            }
+            var url = '/api/entries';
+            var method = 'POST';
+            if (editMode && currentEditId) {
+                url = '/api/entries/' + currentEditId;
+                method = 'PUT';
+            }
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entryData)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function() {
+                cancelEdit();
+                loadEntries();
+            })
+            .catch(function(err) {
+                console.error('保存失败:', err);
+            });
+        }
+
+        function editEntry(id) {
+            var entry = entries.find(function(e) { return e.id === id; });
+            if (!entry) return;
+            document.getElementById('editId').value = entry.id;
+            document.getElementById('authorInput').value = entry.author || '';
+            document.getElementById('bookInput').value = entry.book || '';
+            document.getElementById('textInput').value = entry.text || '';
+            document.getElementById('riverSectionInput').value = entry.riverSection || '';
+            document.getElementById('themeInput').value = entry.theme || '';
+            document.getElementById('yearInput').value = entry.year || '';
+            document.getElementById('noteInput').value = entry.note || '';
+            editMode = true;
+            currentEditId = id;
+            document.getElementById('formTitle').textContent = '✏️ 编辑条目';
+        }
+
+        function cancelEdit() {
+            document.getElementById('editId').value = '';
+            document.getElementById('authorInput').value = '';
+            document.getElementById('bookInput').value = '';
+            document.getElementById('textInput').value = '';
+            document.getElementById('riverSectionInput').value = '';
+            document.getElementById('themeInput').value = '';
+            document.getElementById('yearInput').value = '';
+            document.getElementById('noteInput').value = '';
+            editMode = false;
+            currentEditId = null;
+            document.getElementById('formTitle').textContent = '✍️ 添加新条目';
+        }
+
+        function deleteEntry(id) {
+            if (!confirm('确定删除此条目吗？')) return;
+            fetch('/api/entries/' + id, { method: 'DELETE' })
+                .then(function() { loadEntries(); })
+                .catch(function(err) { console.error('删除失败:', err); });
+        }
+
+        // 过滤功能
+        function applyFilter() {
+            var bookFilter = document.getElementById('filterBook').value.trim().toLowerCase();
+            var riverFilter = document.getElementById('filterRiver').value.trim().toLowerCase();
+            var themeFilter = document.getElementById('filterTheme').value.trim().toLowerCase();
+
+            filteredEntries = entries.filter(function(entry) {
+                var matchBook = true, matchRiver = true, matchTheme = true;
+                if (bookFilter) {
+                    matchBook = (entry.book || '').toLowerCase().indexOf(bookFilter) !== -1;
+                }
+                if (riverFilter) {
+                    matchRiver = (entry.riverSection || '').toLowerCase().indexOf(riverFilter) !== -1;
+                }
+                if (themeFilter) {
+                    matchTheme = (entry.theme || '').toLowerCase().indexOf(themeFilter) !== -1;
+                }
+                return matchBook && matchRiver && matchTheme;
+            });
+            renderTable();
+        }
+
+        function resetFilter() {
+            document.getElementById('filterBook').value = '';
+            document.getElementById('filterRiver').value = '';
+            document.getElementById('filterTheme').value = '';
+            filteredEntries = entries.slice();
+            renderTable();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // 页面启动
+        loadEntries();
+    </script>
+</body>
+</html>
